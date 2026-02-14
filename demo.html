@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar Copy - Extension Preview</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .preview-container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      max-width: 800px;
+    }
+    h1 {
+      color: #1a73e8;
+      margin-bottom: 10px;
+    }
+    .info {
+      color: #5f6368;
+      margin-bottom: 30px;
+    }
+    .extension-preview {
+      display: inline-block;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    iframe {
+      border: none;
+      border-radius: 6px;
+    }
+    .instructions {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #e8f0fe;
+      border-radius: 4px;
+      border-left: 4px solid #1a73e8;
+    }
+    .instructions h2 {
+      margin-top: 0;
+      color: #1a73e8;
+    }
+    .instructions ol {
+      line-height: 1.8;
+    }
+    .note {
+      background-color: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-container">
+    <h1>📅 Calendar Copy Extension</h1>
+    <p class="info">A Chrome extension to copy events from one date to another in Google Calendar</p>
+    
+    <div class="extension-preview">
+      <iframe src="popup.html" width="350" height="500"></iframe>
+    </div>
+    
+    <div class="instructions">
+      <h2>Installation Instructions</h2>
+      <ol>
+        <li>Open Chrome and navigate to <code>chrome://extensions/</code></li>
+        <li>Enable "Developer mode" (toggle in top right)</li>
+        <li>Click "Load unpacked"</li>
+        <li>Select this folder</li>
+        <li>The extension is now installed!</li>
+      </ol>
+    </div>
+    
+    <div class="note">
+      <strong>Note:</strong> This preview shows the extension popup UI. To use the actual functionality, install the extension in Chrome and use it on calendar.google.com
+    </div>
+  </div>
+</body>
+</html>

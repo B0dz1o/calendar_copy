@@ -81,11 +81,30 @@ calendar_copy/
 - Active internet connection
 - Google Calendar account
 
-## Limitations
+## Limitations & Current Implementation
 
-- Only works with Google Calendar web interface
-- Copies events on the current calendar view
-- May require page refresh if calendar structure changes
+**Current State**: This is a basic implementation that provides the UI framework and structure for a calendar event copying extension.
+
+**What Works**:
+- ✅ Extension loads and runs on Google Calendar
+- ✅ Date selection and UI interactions
+- ✅ Communication between popup and content script
+- ✅ Basic event detection framework
+
+**Implementation Notes**:
+- The current version provides a foundation for event copying functionality
+- Event detection uses basic DOM selectors that work with Google Calendar's structure
+- For production use, you may want to:
+  - Use the Google Calendar API for more reliable event copying
+  - Add OAuth2 authentication for API access
+  - Implement more robust event data extraction
+  - Handle recurring events, reminders, and attendees
+  - Add error handling for edge cases
+
+**Technical Limitations**:
+- Works only with Google Calendar web interface
+- DOM-based detection may need updates if Google Calendar changes its structure
+- Requires manual testing for each Google Calendar update
 
 ## Troubleshooting
 

@@ -127,22 +127,36 @@ function extractEventData(element) {
 async function copyEvent(eventData, dayOffset) {
   return new Promise((resolve, reject) => {
     try {
-      // Simulate event copying
-      // In a real implementation, this would:
-      // 1. Click on the event to open it
-      // 2. Extract event details (title, time, description, etc.)
-      // 3. Create a new event with the same details on the target date
+      // NOTE: This is a simplified implementation
+      // For production use, this would need to:
+      // 1. Click on the event element to open the event details dialog
+      // 2. Extract all event information (title, time, description, attendees, etc.)
+      // 3. Click "More actions" > "Duplicate" or create a new event
+      // 4. Adjust the date by dayOffset
+      // 5. Save the new event
       
-      console.log(`Copying event: ${eventData.title}`);
+      // The challenge is that Google Calendar's DOM structure is dynamic and
+      // may change. A more robust solution would use the Google Calendar API
+      // instead of DOM manipulation.
       
-      // For demonstration purposes, we'll just log the action
-      // A complete implementation would interact with Google Calendar's UI
-      // or use the Calendar API
+      console.log(`[Calendar Copy] Processing event: "${eventData.title}" (offset: ${dayOffset} days)`);
       
+      // Attempt to simulate event duplication
+      // In a real scenario, this would programmatically interact with the UI
+      const element = eventData.element;
+      
+      if (element && element.click) {
+        // This would open the event dialog in Google Calendar
+        // Additional logic would be needed to duplicate and modify the date
+        console.log(`[Calendar Copy] Would duplicate event with ID: ${eventData.eventId}`);
+      }
+      
+      // Simulate processing time
       setTimeout(() => {
         resolve(true);
       }, 100);
     } catch (error) {
+      console.error(`[Calendar Copy] Error copying event:`, error);
       reject(error);
     }
   });
@@ -157,31 +171,4 @@ function formatDate(date) {
   });
 }
 
-// Helper function to wait for element
-function waitForElement(selector, timeout = 5000) {
-  return new Promise((resolve, reject) => {
-    const element = document.querySelector(selector);
-    if (element) {
-      resolve(element);
-      return;
-    }
 
-    const observer = new MutationObserver(() => {
-      const element = document.querySelector(selector);
-      if (element) {
-        observer.disconnect();
-        resolve(element);
-      }
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-
-    setTimeout(() => {
-      observer.disconnect();
-      reject(new Error(`Element ${selector} not found within ${timeout}ms`));
-    }, timeout);
-  });
-}
