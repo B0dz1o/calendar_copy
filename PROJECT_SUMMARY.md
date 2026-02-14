@@ -19,10 +19,12 @@ Successfully created a Google Chrome extension that enables users to copy calend
 9. **demo.html** - Preview/demo page
 
 ### Code Statistics
-- **Total Lines**: 549 lines (JavaScript, HTML, CSS)
-- **JavaScript**: 274 lines across 2 files
-- **HTML**: 134 lines across 2 files
-- **CSS**: 141 lines
+- **Total Lines**: ~700 lines (JavaScript, HTML, CSS)
+- **JavaScript**: ~580 lines across 2 files
+  - content.js: 347 lines (event selection, DOM interaction)
+  - popup.js: 233 lines (UI logic, mode switching)
+- **HTML**: ~152 lines across 2 files
+- **CSS**: 194 lines (including new selection mode styles)
 
 ## ✨ Features Implemented
 
@@ -32,6 +34,10 @@ Successfully created a Google Chrome extension that enables users to copy calend
 - ✅ Visual feedback for user actions
 - ✅ Instructions built into UI
 - ✅ Status messages (success, error, info)
+- ✅ **NEW:** Mode selector for copy methods
+- ✅ **NEW:** Selection info panel with event count
+- ✅ **NEW:** Clear selection button
+- ✅ **NEW:** Accessibility features (ARIA attributes)
 
 ### Functionality
 - ✅ Date selection and validation
@@ -40,6 +46,11 @@ Successfully created a Google Chrome extension that enables users to copy calend
 - ✅ Google Calendar URL validation
 - ✅ Event detection framework
 - ✅ Error handling
+- ✅ **NEW:** Individual event selection by clicking
+- ✅ **NEW:** Visual feedback for selected events (blue outline + checkmark)
+- ✅ **NEW:** Two copy modes: "Copy All" and "Select Events"
+- ✅ **NEW:** Real-time selected event count display
+- ✅ **NEW:** Clear selection functionality
 
 ### Security
 - ✅ Secure URL validation (prevents malicious redirects)

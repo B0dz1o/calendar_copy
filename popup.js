@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const targetDate = document.getElementById('targetDate');
   const copyBtn = document.getElementById('copyBtn');
   const statusDiv = document.getElementById('status');
+  const modeAll = document.getElementById('modeAll');
+  const modeSelected = document.getElementById('modeSelected');
+  const selectionInfo = document.getElementById('selectionInfo');
+  const selectedCount = document.getElementById('selectedCount');
+  const clearSelectionBtn = document.getElementById('clearSelectionBtn');
 
   // Set default dates
   const today = new Date().toISOString().split('T')[0];
@@ -38,10 +43,132 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.storage.local.set({ targetDate: targetDate.value });
   });
 
+  // Handle mode change
+  modeAll.addEventListener('change', function() {
+    if (this.checked) {
+      handleModeChange('all');
+    }
+  });
+
+  modeSelected.addEventListener('change', function() {
+    if (this.checked) {
+      handleModeChange('selected');
+    }
+  });
+
+  async function handleModeChange(mode) {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      if (!tab.url || !isGoogleCalendarUrl(tab.url)) {
+        if (mode === 'selected') {
+          showStatus('Please open Google Calendar to use selection mode', 'error');
+          modeAll.checked = true;
+        }
+        return;
+      }
+
+      // Send mode change to content script
+      await chrome.tabs.sendMessage(tab.id, {
+        action: 'setSelectionMode',
+        enabled: mode === 'selected'
+      });
+
+      // Show/hide selection info
+      if (mode === 'selected') {
+        selectionInfo.style.display = 'block';
+        updateSelectedCount();
+        startCountPolling();
+        showStatus('Click on events in the calendar to select them', 'info');
+      } else {
+        selectionInfo.style.display = 'none';
+        stopCountPolling();
+        statusDiv.className = 'status';
+      }
+    } catch (error) {
+      console.error('Error changing mode:', error);
+    }
+  }
+
+  // Update selected count
+  async function updateSelectedCount() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      if (!tab.url || !isGoogleCalendarUrl(tab.url)) {
+        return;
+      }
+
+      const response = await chrome.tabs.sendMessage(tab.id, {
+        action: 'getSelectedCount'
+      });
+
+      if (response && response.count !== undefined) {
+        selectedCount.textContent = response.count;
+      }
+    } catch (error) {
+      console.error('Error getting selected count:', error);
+    }
+  }
+
+  // Poll for selected count updates when in selection mode
+  let countUpdateInterval = null;
+  
+  function startCountPolling() {
+    if (countUpdateInterval) return;
+    countUpdateInterval = setInterval(() => {
+      if (modeSelected.checked && selectionInfo.style.display !== 'none') {
+        updateSelectedCount();
+      }
+    }, 1000);
+  }
+  
+  function stopCountPolling() {
+    if (countUpdateInterval) {
+      clearInterval(countUpdateInterval);
+      countUpdateInterval = null;
+    }
+  }
+  
+  // Start/stop polling based on visibility
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      stopCountPolling();
+    } else if (modeSelected.checked && selectionInfo.style.display !== 'none') {
+      startCountPolling();
+    }
+  });
+  
+  // Start polling on load if in selection mode
+  if (modeSelected.checked && selectionInfo.style.display !== 'none') {
+    startCountPolling();
+  }
+
+  // Clear selection button
+  clearSelectionBtn.addEventListener('click', async function() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      if (!tab.url || !isGoogleCalendarUrl(tab.url)) {
+        return;
+      }
+
+      await chrome.tabs.sendMessage(tab.id, {
+        action: 'clearSelection'
+      });
+
+      updateSelectedCount();
+      showStatus('Selection cleared', 'info');
+    } catch (error) {
+      console.error('Error clearing selection:', error);
+    }
+  });
+
   // Handle copy button click
   copyBtn.addEventListener('click', async function() {
     const source = sourceDate.value;
     const target = targetDate.value;
+    const copyMode = modeSelected.checked ? 'selected' : 'all';
 
     if (!source || !target) {
       showStatus('Please select both source and target dates', 'error');
@@ -70,11 +197,17 @@ document.addEventListener('DOMContentLoaded', function() {
       const response = await chrome.tabs.sendMessage(tab.id, {
         action: 'copyEvents',
         sourceDate: source,
-        targetDate: target
+        targetDate: target,
+        mode: copyMode
       });
 
       if (response && response.success) {
         showStatus(response.message || 'Events copied successfully!', 'success');
+        // Clear selection after successful copy in selected mode
+        if (copyMode === 'selected') {
+          await chrome.tabs.sendMessage(tab.id, { action: 'clearSelection' });
+          updateSelectedCount();
+        }
       } else {
         showStatus(response?.error || 'Failed to copy events', 'error');
       }

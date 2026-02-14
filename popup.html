@@ -21,6 +21,22 @@
       <input type="date" id="targetDate" required>
     </div>
     
+    <div class="mode-selector">
+      <label>
+        <input type="radio" name="copyMode" value="all" id="modeAll" checked>
+        Copy All Events
+      </label>
+      <label>
+        <input type="radio" name="copyMode" value="selected" id="modeSelected">
+        Select Events to Copy
+      </label>
+    </div>
+
+    <div id="selectionInfo" class="selection-info" style="display: none;">
+      <p>Selected events: <strong id="selectedCount">0</strong></p>
+      <button id="clearSelectionBtn" class="btn btn-secondary">Clear Selection</button>
+    </div>
+    
     <div class="button-group">
       <button id="copyBtn" class="btn btn-primary">Copy Events</button>
     </div>
@@ -31,6 +47,8 @@
       <h3>How to use:</h3>
       <ol>
         <li>Navigate to Google Calendar</li>
+        <li>Choose copy mode: "Copy All" or "Select Events"</li>
+        <li>If selecting events: Click on events to select them</li>
         <li>Select the source date (date to copy from)</li>
         <li>Select the target date (date to copy to)</li>
         <li>Click "Copy Events"</li>
