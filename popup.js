@@ -1,5 +1,17 @@
 // popup.js - Handles the extension popup UI interactions
 
+// Securely validate Google Calendar URLs
+function isGoogleCalendarUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    // Check that the hostname is exactly calendar.google.com or a direct subdomain
+    return urlObj.hostname === 'calendar.google.com' || 
+           urlObj.hostname.endsWith('.calendar.google.com');
+  } catch (e) {
+    return false;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   const sourceDate = document.getElementById('sourceDate');
   const targetDate = document.getElementById('targetDate');
@@ -45,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Check if current tab is Google Calendar
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       
-      if (!tab.url || !tab.url.includes('calendar.google.com')) {
+      if (!tab.url || !isGoogleCalendarUrl(tab.url)) {
         showStatus('Please open Google Calendar first', 'error');
         return;
       }
