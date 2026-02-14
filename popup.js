@@ -78,9 +78,11 @@ document.addEventListener('DOMContentLoaded', function() {
       if (mode === 'selected') {
         selectionInfo.style.display = 'block';
         updateSelectedCount();
+        startCountPolling();
         showStatus('Click on events in the calendar to select them', 'info');
       } else {
         selectionInfo.style.display = 'none';
+        stopCountPolling();
         statusDiv.className = 'status';
       }
     } catch (error) {
@@ -110,11 +112,37 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Poll for selected count updates when in selection mode
-  setInterval(() => {
-    if (modeSelected.checked && selectionInfo.style.display !== 'none') {
-      updateSelectedCount();
+  let countUpdateInterval = null;
+  
+  function startCountPolling() {
+    if (countUpdateInterval) return;
+    countUpdateInterval = setInterval(() => {
+      if (modeSelected.checked && selectionInfo.style.display !== 'none') {
+        updateSelectedCount();
+      }
+    }, 1000);
+  }
+  
+  function stopCountPolling() {
+    if (countUpdateInterval) {
+      clearInterval(countUpdateInterval);
+      countUpdateInterval = null;
     }
-  }, 1000);
+  }
+  
+  // Start/stop polling based on visibility
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      stopCountPolling();
+    } else if (modeSelected.checked && selectionInfo.style.display !== 'none') {
+      startCountPolling();
+    }
+  });
+  
+  // Start polling on load if in selection mode
+  if (modeSelected.checked && selectionInfo.style.display !== 'none') {
+    startCountPolling();
+  }
 
   // Clear selection button
   clearSelectionBtn.addEventListener('click', async function() {

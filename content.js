@@ -90,9 +90,11 @@ function handleEventClick(event) {
   if (selectedEvents.has(eventId)) {
     selectedEvents.delete(eventId);
     eventElement.classList.remove('calendar-copy-selected');
+    eventElement.removeAttribute('aria-selected');
   } else {
     selectedEvents.add(eventId);
     eventElement.classList.add('calendar-copy-selected');
+    eventElement.setAttribute('aria-selected', 'true');
   }
 
   // Update visual feedback
@@ -104,6 +106,7 @@ function clearSelection() {
   const selectedElements = document.querySelectorAll('.calendar-copy-selected');
   selectedElements.forEach(element => {
     element.classList.remove('calendar-copy-selected');
+    element.removeAttribute('aria-selected');
   });
   
   selectedEvents.clear();
@@ -137,9 +140,8 @@ function updateSelectionStyles() {
         border-radius: 50%;
         width: 18px;
         height: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        line-height: 18px;
+        text-align: center;
         font-size: 12px;
         font-weight: bold;
         z-index: 1000;
