@@ -7,9 +7,25 @@ A simple Google Chrome extension that allows you to copy events from one date to
 ## Features
 
 - 📅 Copy all events from a source date to a target date
+- 🖱️ **NEW:** Select specific events to copy by clicking on them
 - 🎯 Simple and intuitive user interface
 - ✨ Works directly with Google Calendar
 - 💾 Remembers your last selected dates
+- ✅ Visual feedback for selected events
+
+### Copy Modes
+
+**Copy All Events**
+![Copy All Mode](https://github.com/user-attachments/assets/d2000f0f-ef08-4c1a-9717-564c84cbb84e)
+
+**Select Events to Copy**
+![Selection Mode](https://github.com/user-attachments/assets/a28b55ee-e08b-4f0b-bfb2-cce9c92fbb96)
+
+When in selection mode:
+- Click on events in Google Calendar to select/deselect them
+- Selected events are highlighted with a blue outline and checkmark (✓)
+- See real-time count of selected events
+- Clear all selections with one click
 
 ## Installation
 
@@ -44,13 +60,23 @@ A simple Google Chrome extension that allows you to copy events from one date to
    - Click the Calendar Copy extension icon in your browser toolbar
    - If you don't see the icon, click the puzzle piece icon and pin Calendar Copy
 
-3. **Select Dates**
+3. **Choose Copy Mode**
+   - **Copy All Events**: Copies all events from the source date
+   - **Select Events to Copy**: Click on individual events in the calendar to select them
+
+4. **Select Events (if using "Select Events" mode)**
+   - Click on events in Google Calendar to select them
+   - Selected events will be highlighted with a blue outline and checkmark
+   - The extension shows the count of selected events
+   - Click "Clear Selection" to deselect all events
+
+5. **Select Dates**
    - **Source Date**: Select the date you want to copy events FROM
    - **Target Date**: Select the date you want to copy events TO
 
-4. **Copy Events**
+6. **Copy Events**
    - Click the "Copy Events" button
-   - The extension will copy all events from the source date to the target date
+   - The extension will copy the selected events (or all events) to the target date
    - You'll see a success message when complete
 
 ## How It Works
