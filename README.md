@@ -1,5 +1,7 @@
 # Calendar Copy - Chrome Extension
 
+![Calendar Copy Extension](https://github.com/user-attachments/assets/44523779-eaeb-462f-994d-7749436f8c73)
+
 A simple Google Chrome extension that allows you to copy events from one date to another in Google Calendar.
 
 ## Features
