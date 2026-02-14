@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar Copy</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Calendar Copy</h1>
+    <p class="subtitle">Copy events from one date to another</p>
+    
+    <div class="form-group">
+      <label for="sourceDate">Source Date:</label>
+      <input type="date" id="sourceDate" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="targetDate">Target Date:</label>
+      <input type="date" id="targetDate" required>
+    </div>
+    
+    <div class="button-group">
+      <button id="copyBtn" class="btn btn-primary">Copy Events</button>
+    </div>
+    
+    <div id="status" class="status"></div>
+    
+    <div class="instructions">
+      <h3>How to use:</h3>
+      <ol>
+        <li>Navigate to Google Calendar</li>
+        <li>Select the source date (date to copy from)</li>
+        <li>Select the target date (date to copy to)</li>
+        <li>Click "Copy Events"</li>
+      </ol>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
