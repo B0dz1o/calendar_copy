@@ -2,19 +2,156 @@
 
 console.log('Calendar Copy extension loaded');
 
+// Track selection mode and selected events
+let selectionModeEnabled = false;
+let selectedEvents = new Set();
+
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'copyEvents') {
-    copyEvents(request.sourceDate, request.targetDate)
+    copyEvents(request.sourceDate, request.targetDate, request.mode)
       .then(result => sendResponse(result))
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true; // Keep message channel open for async response
+  } else if (request.action === 'setSelectionMode') {
+    setSelectionMode(request.enabled);
+    sendResponse({ success: true });
+    return true;
+  } else if (request.action === 'getSelectedCount') {
+    sendResponse({ count: selectedEvents.size });
+    return true;
+  } else if (request.action === 'clearSelection') {
+    clearSelection();
+    sendResponse({ success: true });
+    return true;
   }
 });
 
-async function copyEvents(sourceDate, targetDate) {
+function setSelectionMode(enabled) {
+  selectionModeEnabled = enabled;
+  
+  if (enabled) {
+    // Add event listeners to calendar events
+    attachEventListeners();
+    // Add visual indication that selection mode is active
+    document.body.classList.add('calendar-copy-selection-mode');
+  } else {
+    // Remove event listeners
+    removeEventListeners();
+    document.body.classList.remove('calendar-copy-selection-mode');
+  }
+}
+
+function attachEventListeners() {
+  // Add click listeners to all event elements
+  const eventSelectors = [
+    '[data-eventid]',
+    '[data-draggable-id]',
+    '[role="button"][data-draggable-id]'
+  ];
+
+  eventSelectors.forEach(selector => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(element => {
+      if (!element.dataset.calendarCopyListener) {
+        element.addEventListener('click', handleEventClick, true);
+        element.dataset.calendarCopyListener = 'true';
+      }
+    });
+  });
+}
+
+function removeEventListeners() {
+  const elements = document.querySelectorAll('[data-calendar-copy-listener]');
+  elements.forEach(element => {
+    element.removeEventListener('click', handleEventClick, true);
+    delete element.dataset.calendarCopyListener;
+  });
+  clearSelection();
+}
+
+function handleEventClick(event) {
+  if (!selectionModeEnabled) {
+    return;
+  }
+
+  // Prevent default action when in selection mode
+  event.preventDefault();
+  event.stopPropagation();
+
+  const eventElement = event.currentTarget;
+  const eventId = eventElement.dataset.eventid || eventElement.dataset.draggableId;
+
+  if (!eventId) {
+    return;
+  }
+
+  // Toggle selection
+  if (selectedEvents.has(eventId)) {
+    selectedEvents.delete(eventId);
+    eventElement.classList.remove('calendar-copy-selected');
+  } else {
+    selectedEvents.add(eventId);
+    eventElement.classList.add('calendar-copy-selected');
+  }
+
+  // Update visual feedback
+  updateSelectionStyles();
+}
+
+function clearSelection() {
+  // Remove selection styling from all selected events
+  const selectedElements = document.querySelectorAll('.calendar-copy-selected');
+  selectedElements.forEach(element => {
+    element.classList.remove('calendar-copy-selected');
+  });
+  
+  selectedEvents.clear();
+  updateSelectionStyles();
+}
+
+function updateSelectionStyles() {
+  // Inject styles if not already present
+  if (!document.getElementById('calendar-copy-styles')) {
+    const style = document.createElement('style');
+    style.id = 'calendar-copy-styles';
+    style.textContent = `
+      .calendar-copy-selection-mode [data-eventid],
+      .calendar-copy-selection-mode [data-draggable-id] {
+        cursor: pointer !important;
+      }
+      
+      .calendar-copy-selected {
+        outline: 3px solid #1a73e8 !important;
+        outline-offset: -3px;
+        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2) !important;
+      }
+      
+      .calendar-copy-selected::after {
+        content: "✓";
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background-color: #1a73e8;
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 1000;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+async function copyEvents(sourceDate, targetDate, mode = 'all') {
   try {
-    console.log(`Copying events from ${sourceDate} to ${targetDate}`);
+    console.log(`Copying events from ${sourceDate} to ${targetDate} (mode: ${mode})`);
 
     // Parse dates
     const sourceDay = new Date(sourceDate + 'T00:00:00');
@@ -23,13 +160,30 @@ async function copyEvents(sourceDate, targetDate) {
     // Calculate day offset
     const dayOffset = Math.floor((targetDay - sourceDay) / (1000 * 60 * 60 * 24));
 
-    // Find all event elements on the current calendar view
-    const events = await findEventsForDate(sourceDate);
+    let events;
+    
+    if (mode === 'selected') {
+      // Copy only selected events
+      if (selectedEvents.size === 0) {
+        return {
+          success: false,
+          error: 'No events selected. Please select events by clicking on them in the calendar.'
+        };
+      }
+      
+      events = await findSelectedEvents();
+    } else {
+      // Copy all events from the source date
+      events = await findEventsForDate(sourceDate);
+    }
     
     if (events.length === 0) {
+      const message = mode === 'selected' 
+        ? 'No selected events found'
+        : `No events found on ${formatDate(sourceDay)}`;
       return {
         success: true,
-        message: `No events found on ${formatDate(sourceDay)}`
+        message: message
       };
     }
 
@@ -46,9 +200,13 @@ async function copyEvents(sourceDate, targetDate) {
       }
     }
 
+    const message = mode === 'selected'
+      ? `Successfully copied ${copiedCount} selected event(s) to ${formatDate(targetDay)}`
+      : `Successfully copied ${copiedCount} event(s) from ${formatDate(sourceDay)} to ${formatDate(targetDay)}`;
+
     return {
       success: true,
-      message: `Successfully copied ${copiedCount} event(s) from ${formatDate(sourceDay)} to ${formatDate(targetDay)}`
+      message: message
     };
   } catch (error) {
     console.error('Error in copyEvents:', error);
@@ -57,6 +215,19 @@ async function copyEvents(sourceDate, targetDate) {
       error: error.message
     };
   }
+}
+
+async function findSelectedEvents() {
+  const events = [];
+  
+  for (const eventId of selectedEvents) {
+    const element = document.querySelector(`[data-eventid="${eventId}"], [data-draggable-id="${eventId}"]`);
+    if (element) {
+      events.push(extractEventData(element));
+    }
+  }
+  
+  return events;
 }
 
 async function findEventsForDate(dateStr) {
