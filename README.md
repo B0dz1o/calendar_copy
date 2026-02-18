@@ -7,9 +7,10 @@ A simple Google Chrome extension that allows you to copy events from one date to
 ## Features
 
 - 📅 Copy all events from a source date to a target date
+- 🎵 **Music Visualization** - Automatically highlights music-related events with icons and special styling
 - 🎯 Simple and intuitive user interface
 - ✨ Works directly with Google Calendar
-- 💾 Remembers your last selected dates
+- 💾 Remembers your last selected dates and preferences
 
 ## Installation
 
@@ -44,11 +45,16 @@ A simple Google Chrome extension that allows you to copy events from one date to
    - Click the Calendar Copy extension icon in your browser toolbar
    - If you don't see the icon, click the puzzle piece icon and pin Calendar Copy
 
-3. **Select Dates**
+3. **Enable Music Visualization (Optional)**
+   - Check the "Enable Music Visualization" option to automatically highlight music-related events
+   - Music events (concerts, rehearsals, lessons, etc.) will be marked with 🎵 icons
+   - The setting is saved and will be remembered for future use
+
+4. **Select Dates**
    - **Source Date**: Select the date you want to copy events FROM
    - **Target Date**: Select the date you want to copy events TO
 
-4. **Copy Events**
+5. **Copy Events**
    - Click the "Copy Events" button
    - The extension will copy all events from the source date to the target date
    - You'll see a success message when complete
@@ -58,7 +64,9 @@ A simple Google Chrome extension that allows you to copy events from one date to
 The extension uses:
 - **Manifest V3**: Latest Chrome extension architecture
 - **Content Scripts**: To interact with Google Calendar's web interface
-- **Chrome Storage API**: To remember your date selections
+- **Music Event Detection**: Automatically identifies music-related events using keyword matching
+- **MutationObserver**: Dynamically detects and visualizes events as the calendar updates
+- **Chrome Storage API**: To remember your date selections and preferences
 - **Chrome Tabs API**: To communicate between popup and calendar page
 
 ## File Structure
@@ -83,6 +91,33 @@ calendar_copy/
 - Active internet connection
 - Google Calendar account
 
+## Music Visualization Feature
+
+The extension includes an intelligent music visualization feature that enhances your calendar experience:
+
+### How It Works
+- **Automatic Detection**: Scans calendar events for music-related keywords (concert, rehearsal, music lesson, band practice, etc.)
+- **Visual Indicators**: Adds 🎵 icons to music events for quick identification
+- **Color Highlighting**: Music events are highlighted with an orange accent color
+- **Real-time Updates**: Dynamically updates visualization as calendar content changes
+- **Toggle Control**: Easily enable or disable the feature from the extension popup
+
+### Supported Music Event Types
+The visualization detects various music-related events including:
+- Concerts and recitals
+- Rehearsals and practice sessions
+- Music lessons (guitar, piano, drums, etc.)
+- Band, orchestra, and choir events
+- Performances and gigs
+- Recording sessions and studio time
+- Jazz, classical, opera, and other genre-specific events
+- Music festivals and shows
+
+### Customization
+- The feature can be toggled on/off via the checkbox in the extension popup
+- Your preference is automatically saved and remembered
+- Changes apply instantly to your current calendar view
+
 ## Limitations & Current Implementation
 
 **Current State**: This is a basic implementation that provides the UI framework and structure for a calendar event copying extension.
@@ -92,6 +127,8 @@ calendar_copy/
 - ✅ Date selection and UI interactions
 - ✅ Communication between popup and content script
 - ✅ Basic event detection framework
+- ✅ **Music visualization with automatic event detection**
+- ✅ **Real-time highlighting of music-related events**
 
 **Implementation Notes**:
 - The current version provides a foundation for event copying functionality

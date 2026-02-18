@@ -17,16 +17,20 @@ document.addEventListener('DOMContentLoaded', function() {
   const targetDate = document.getElementById('targetDate');
   const copyBtn = document.getElementById('copyBtn');
   const statusDiv = document.getElementById('status');
+  const musicVisualization = document.getElementById('musicVisualization');
 
   // Set default dates
   const today = new Date().toISOString().split('T')[0];
   sourceDate.value = today;
   targetDate.value = today;
 
-  // Load saved dates from storage
-  chrome.storage.local.get(['sourceDate', 'targetDate'], function(result) {
+  // Load saved dates and settings from storage
+  chrome.storage.local.get(['sourceDate', 'targetDate', 'musicVisualizationEnabled'], function(result) {
     if (result.sourceDate) sourceDate.value = result.sourceDate;
     if (result.targetDate) targetDate.value = result.targetDate;
+    if (result.musicVisualizationEnabled !== undefined) {
+      musicVisualization.checked = result.musicVisualizationEnabled;
+    }
   });
 
   // Save dates when changed
@@ -36,6 +40,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
   targetDate.addEventListener('change', function() {
     chrome.storage.local.set({ targetDate: targetDate.value });
+  });
+
+  // Save music visualization setting and apply it
+  musicVisualization.addEventListener('change', function() {
+    const enabled = musicVisualization.checked;
+    chrome.storage.local.set({ musicVisualizationEnabled: enabled });
+    
+    // Send message to content script to apply/remove visualization
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (tabs[0] && isGoogleCalendarUrl(tabs[0].url)) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: 'toggleMusicVisualization',
+          enabled: enabled
+        }).catch((error) => {
+          // Log error for debugging if calendar page isn't ready
+          console.log('Could not toggle music visualization:', error.message);
+        });
+      }
+    });
   });
 
   // Handle copy button click

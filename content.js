@@ -2,8 +2,116 @@
 
 console.log('Calendar Copy extension loaded');
 
+// Music-related keywords for event detection
+const MUSIC_KEYWORDS = [
+  'concert', 'recital', 'rehearsal', 'practice', 'music lesson',
+  'band', 'orchestra', 'choir', 'singing', 'guitar', 'piano',
+  'drums', 'violin', 'cello', 'trumpet', 'saxophone', 'flute',
+  'performance', 'gig', 'show', 'festival', 'symphony', 'opera',
+  'jazz', 'rock', 'classical', 'musical', 'karaoke', 'dj',
+  'recording', 'studio session', 'jam session', 'soundcheck'
+];
+
+// Track visualization state
+let musicVisualizationEnabled = true;
+let visualizationTimeout = null;
+
+// Initialize music visualization on page load
+initializeMusicVisualization();
+
+function initializeMusicVisualization() {
+  // Load saved setting
+  chrome.storage.local.get(['musicVisualizationEnabled'], function(result) {
+    if (result.musicVisualizationEnabled !== undefined) {
+      musicVisualizationEnabled = result.musicVisualizationEnabled;
+    }
+    if (musicVisualizationEnabled) {
+      applyMusicVisualization();
+    }
+  });
+  
+  // Set up observer to detect new events loaded dynamically
+  // Use debouncing to avoid excessive calls
+  const observer = new MutationObserver(function(mutations) {
+    if (musicVisualizationEnabled) {
+      // Debounce: only apply visualization after 200ms of no mutations
+      clearTimeout(visualizationTimeout);
+      visualizationTimeout = setTimeout(() => {
+        applyMusicVisualization();
+      }, 200);
+    }
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
+
+function applyMusicVisualization() {
+  // Find all event elements in Google Calendar
+  // Combine selectors into a single query for better performance
+  const combinedSelector = '[data-eventid], [data-draggable-id], [role="button"][data-draggable-id], .event';
+  const events = document.querySelectorAll(combinedSelector);
+  
+  events.forEach(event => {
+    if (!event.dataset.musicVisualized && isMusicEvent(event)) {
+      markAsMusicEvent(event);
+    }
+  });
+}
+
+function removeMusicVisualization() {
+  // Remove all music indicators and highlights
+  document.querySelectorAll('.music-event-indicator').forEach(el => el.remove());
+  document.querySelectorAll('.music-event-highlight').forEach(el => {
+    el.classList.remove('music-event-highlight');
+    delete el.dataset.musicVisualized;
+  });
+}
+
+function isMusicEvent(element) {
+  const text = element.textContent?.toLowerCase() || '';
+  return MUSIC_KEYWORDS.some(keyword => text.includes(keyword));
+}
+
+function markAsMusicEvent(element) {
+  // Mark as visualized to avoid duplicate processing
+  element.dataset.musicVisualized = 'true';
+  
+  // Add highlight class
+  element.classList.add('music-event-highlight');
+  
+  // Add music icon if there isn't one already
+  if (!element.querySelector('.music-event-indicator')) {
+    const indicator = document.createElement('span');
+    indicator.className = 'music-event-indicator';
+    indicator.textContent = '🎵';
+    indicator.title = 'Music Event';
+    
+    // Try to insert at the beginning of the event text
+    const firstChild = element.firstChild;
+    if (firstChild) {
+      element.insertBefore(indicator, firstChild);
+    } else {
+      element.appendChild(indicator);
+    }
+  }
+}
+
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'toggleMusicVisualization') {
+    musicVisualizationEnabled = request.enabled;
+    if (musicVisualizationEnabled) {
+      applyMusicVisualization();
+    } else {
+      removeMusicVisualization();
+    }
+    sendResponse({ success: true });
+    return true;
+  }
+  
   if (request.action === 'copyEvents') {
     copyEvents(request.sourceDate, request.targetDate)
       .then(result => sendResponse(result))
