@@ -2,6 +2,10 @@
 
 console.log('Calendar Copy extension loaded');
 
+// Configuration constants
+const OBSERVER_RETRY_DELAY_MS = 500;
+const OBSERVER_MAX_RETRIES = 10; // Stop trying after 5 seconds
+
 // Music-related keywords for event detection
 const MUSIC_KEYWORDS = [
   'concert', 'recital', 'rehearsal', 'practice', 'music lesson',
@@ -15,6 +19,7 @@ const MUSIC_KEYWORDS = [
 // Track visualization state
 let musicVisualizationEnabled = true;
 let visualizationTimeout = null;
+let observerRetries = 0;
 
 // Initialize music visualization on page load
 initializeMusicVisualization();
@@ -51,9 +56,13 @@ function initializeMusicVisualization() {
         childList: true,
         subtree: true
       });
-    } else {
+      observerRetries = 0; // Reset counter on success
+    } else if (observerRetries < OBSERVER_MAX_RETRIES) {
       // If calendar container not found yet, retry after a short delay
-      setTimeout(observeCalendar, 500);
+      observerRetries++;
+      setTimeout(observeCalendar, OBSERVER_RETRY_DELAY_MS);
+    } else {
+      console.warn('Calendar Copy: Could not find calendar container after maximum retries');
     }
   };
   
@@ -167,6 +176,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // Validate date string format and values
+// Note: This validation logic is duplicated in popup.js
+// Both files run in different contexts (content script vs popup)
+// and cannot easily share code without build complexity
 function isValidDateFormat(dateString) {
   try {
     // Check format first

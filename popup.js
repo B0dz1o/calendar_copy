@@ -1,5 +1,8 @@
 // popup.js - Handles the extension popup UI interactions
 
+// Configuration constants
+const MESSAGE_TIMEOUT_MS = 30000; // 30 seconds
+
 // Securely validate Google Calendar URLs
 function isGoogleCalendarUrl(url) {
   try {
@@ -124,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
           targetDate: target
         }),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Request timeout')), 30000)
+          setTimeout(() => reject(new Error('Request timeout')), MESSAGE_TIMEOUT_MS)
         )
       ]);
 
