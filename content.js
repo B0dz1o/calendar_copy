@@ -14,6 +14,7 @@ const MUSIC_KEYWORDS = [
 
 // Track visualization state
 let musicVisualizationEnabled = true;
+let visualizationTimeout = null;
 
 // Initialize music visualization on page load
 initializeMusicVisualization();
@@ -30,9 +31,14 @@ function initializeMusicVisualization() {
   });
   
   // Set up observer to detect new events loaded dynamically
+  // Use debouncing to avoid excessive calls
   const observer = new MutationObserver(function(mutations) {
     if (musicVisualizationEnabled) {
-      applyMusicVisualization();
+      // Debounce: only apply visualization after 200ms of no mutations
+      clearTimeout(visualizationTimeout);
+      visualizationTimeout = setTimeout(() => {
+        applyMusicVisualization();
+      }, 200);
     }
   });
   
@@ -44,20 +50,14 @@ function initializeMusicVisualization() {
 
 function applyMusicVisualization() {
   // Find all event elements in Google Calendar
-  const eventSelectors = [
-    '[data-eventid]',
-    '[data-draggable-id]',
-    '[role="button"][data-draggable-id]',
-    '.event'
-  ];
+  // Combine selectors into a single query for better performance
+  const combinedSelector = '[data-eventid], [data-draggable-id], [role="button"][data-draggable-id], .event';
+  const events = document.querySelectorAll(combinedSelector);
   
-  eventSelectors.forEach(selector => {
-    const events = document.querySelectorAll(selector);
-    events.forEach(event => {
-      if (!event.dataset.musicVisualized && isMusicEvent(event)) {
-        markAsMusicEvent(event);
-      }
-    });
+  events.forEach(event => {
+    if (!event.dataset.musicVisualized && isMusicEvent(event)) {
+      markAsMusicEvent(event);
+    }
   });
 }
 

@@ -53,8 +53,9 @@ document.addEventListener('DOMContentLoaded', function() {
         chrome.tabs.sendMessage(tabs[0].id, {
           action: 'toggleMusicVisualization',
           enabled: enabled
-        }).catch(() => {
-          // Silently handle if calendar page isn't ready
+        }).catch((error) => {
+          // Log error for debugging if calendar page isn't ready
+          console.log('Could not toggle music visualization:', error.message);
         });
       }
     });
