@@ -42,10 +42,22 @@ function initializeMusicVisualization() {
     }
   });
   
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+  // Observe only the calendar container for better performance
+  // Wait for calendar to load before observing
+  const observeCalendar = () => {
+    const calendarContainer = document.querySelector('[role="main"]') || document.body;
+    observer.observe(calendarContainer, {
+      childList: true,
+      subtree: true
+    });
+  };
+  
+  // Check if calendar is already loaded
+  if (document.readyState === 'complete') {
+    observeCalendar();
+  } else {
+    window.addEventListener('load', observeCalendar);
+  }
 }
 
 function applyMusicVisualization() {
@@ -101,7 +113,17 @@ function markAsMusicEvent(element) {
 
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // Validate request object
+  if (!request || typeof request !== 'object' || !request.action) {
+    sendResponse({ success: false, error: 'Invalid request' });
+    return true;
+  }
+  
   if (request.action === 'toggleMusicVisualization') {
+    if (typeof request.enabled !== 'boolean') {
+      sendResponse({ success: false, error: 'Invalid enabled value' });
+      return true;
+    }
     musicVisualizationEnabled = request.enabled;
     if (musicVisualizationEnabled) {
       applyMusicVisualization();
@@ -113,11 +135,31 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   
   if (request.action === 'copyEvents') {
+    // Validate date parameters
+    if (!request.sourceDate || !request.targetDate) {
+      sendResponse({ success: false, error: 'Missing date parameters' });
+      return true;
+    }
+    
+    // Validate date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(request.sourceDate) || !dateRegex.test(request.targetDate)) {
+      sendResponse({ success: false, error: 'Invalid date format' });
+      return true;
+    }
+    
     copyEvents(request.sourceDate, request.targetDate)
       .then(result => sendResponse(result))
-      .catch(error => sendResponse({ success: false, error: error.message }));
+      .catch(error => sendResponse({ 
+        success: false, 
+        error: error.message || 'Unknown error occurred' 
+      }));
     return true; // Keep message channel open for async response
   }
+  
+  // Unknown action
+  sendResponse({ success: false, error: 'Unknown action' });
+  return true;
 });
 
 async function copyEvents(sourceDate, targetDate) {
@@ -173,22 +215,14 @@ async function findEventsForDate(dateStr) {
   
   const events = [];
   
-  // Try to find events - Google Calendar uses various selectors
-  // This is a basic implementation that looks for event divs
-  const eventSelectors = [
-    '[data-eventid]',
-    '[data-draggable-id]',
-    '.event',
-    '[role="button"][data-draggable-id]'
-  ];
-
-  for (const selector of eventSelectors) {
-    const elements = document.querySelectorAll(selector);
-    for (const element of elements) {
-      // Check if event belongs to the source date
-      if (isEventOnDate(element, dateStr)) {
-        events.push(extractEventData(element));
-      }
+  // Combine selectors into a single query for better performance
+  const combinedSelector = '[data-eventid], [data-draggable-id], [role="button"][data-draggable-id], .event';
+  const elements = document.querySelectorAll(combinedSelector);
+  
+  for (const element of elements) {
+    // Check if event belongs to the source date
+    if (isEventOnDate(element, dateStr)) {
+      events.push(extractEventData(element));
     }
   }
 
@@ -208,16 +242,11 @@ function isEventOnDate(element, dateStr) {
     return true;
   }
   
-  // Check parent elements
-  let parent = element.parentElement;
-  let depth = 0;
-  while (parent && depth < 5) {
-    if (parent.dataset.date === dateStr || 
-        parent.dataset.date === dateMatch) {
-      return true;
-    }
-    parent = parent.parentElement;
-    depth++;
+  // Use closest() for efficient parent lookup
+  const parentWithDate = element.closest('[data-date]');
+  if (parentWithDate) {
+    return parentWithDate.dataset.date === dateStr || 
+           parentWithDate.dataset.date === dateMatch;
   }
   
   return false;

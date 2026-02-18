@@ -12,6 +12,17 @@ function isGoogleCalendarUrl(url) {
   }
 }
 
+// Validate date string format
+function isValidDate(dateString) {
+  try {
+    const date = new Date(dateString + 'T00:00:00');
+    return date instanceof Date && !isNaN(date.getTime()) && 
+           dateString === date.toISOString().split('T')[0];
+  } catch (e) {
+    return false;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   const sourceDate = document.getElementById('sourceDate');
   const targetDate = document.getElementById('targetDate');
@@ -71,6 +82,12 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
+    // Validate date formats
+    if (!isValidDate(source) || !isValidDate(target)) {
+      showStatus('Please enter valid dates', 'error');
+      return;
+    }
+
     if (source === target) {
       showStatus('Source and target dates must be different', 'error');
       return;
@@ -89,12 +106,17 @@ document.addEventListener('DOMContentLoaded', function() {
       copyBtn.disabled = true;
       showStatus('Copying events...', 'info');
 
-      // Send message to content script
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        action: 'copyEvents',
-        sourceDate: source,
-        targetDate: target
-      });
+      // Send message to content script with timeout
+      const response = await Promise.race([
+        chrome.tabs.sendMessage(tab.id, {
+          action: 'copyEvents',
+          sourceDate: source,
+          targetDate: target
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 30000)
+        )
+      ]);
 
       if (response && response.success) {
         showStatus(response.message || 'Events copied successfully!', 'success');
@@ -103,7 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch (error) {
       console.error('Error:', error);
-      showStatus('Error: ' + error.message, 'error');
+      const errorMsg = error.message === 'Request timeout' 
+        ? 'Request timed out. Please try again.' 
+        : 'Error: ' + error.message;
+      showStatus(errorMsg, 'error');
     } finally {
       copyBtn.disabled = false;
     }
