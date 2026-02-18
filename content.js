@@ -45,11 +45,16 @@ function initializeMusicVisualization() {
   // Observe only the calendar container for better performance
   // Wait for calendar to load before observing
   const observeCalendar = () => {
-    const calendarContainer = document.querySelector('[role="main"]') || document.body;
-    observer.observe(calendarContainer, {
-      childList: true,
-      subtree: true
-    });
+    const calendarContainer = document.querySelector('[role="main"]');
+    if (calendarContainer) {
+      observer.observe(calendarContainer, {
+        childList: true,
+        subtree: true
+      });
+    } else {
+      // If calendar container not found yet, retry after a short delay
+      setTimeout(observeCalendar, 500);
+    }
   };
   
   // Check if calendar is already loaded
@@ -141,10 +146,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return true;
     }
     
-    // Validate date format (YYYY-MM-DD)
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(request.sourceDate) || !dateRegex.test(request.targetDate)) {
-      sendResponse({ success: false, error: 'Invalid date format' });
+    // Validate date format and values (YYYY-MM-DD with valid date components)
+    if (!isValidDateFormat(request.sourceDate) || !isValidDateFormat(request.targetDate)) {
+      sendResponse({ success: false, error: 'Invalid date format or values' });
       return true;
     }
     
@@ -161,6 +165,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   sendResponse({ success: false, error: 'Unknown action' });
   return true;
 });
+
+// Validate date string format and values
+function isValidDateFormat(dateString) {
+  try {
+    // Check format first
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return false;
+    }
+    
+    // Parse date components directly to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    
+    // Verify the date components match (handles invalid dates like 2024-13-45)
+    return date.getFullYear() === year && 
+           date.getMonth() === month - 1 && 
+           date.getDate() === day;
+  } catch (e) {
+    return false;
+  }
+}
 
 async function copyEvents(sourceDate, targetDate) {
   try {

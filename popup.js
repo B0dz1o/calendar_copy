@@ -15,9 +15,19 @@ function isGoogleCalendarUrl(url) {
 // Validate date string format
 function isValidDate(dateString) {
   try {
-    const date = new Date(dateString + 'T00:00:00');
-    return date instanceof Date && !isNaN(date.getTime()) && 
-           dateString === date.toISOString().split('T')[0];
+    // Check format first
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return false;
+    }
+    
+    // Parse date components directly to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    
+    // Verify the date components match (handles invalid dates like 2024-13-45)
+    return date.getFullYear() === year && 
+           date.getMonth() === month - 1 && 
+           date.getDate() === day;
   } catch (e) {
     return false;
   }
