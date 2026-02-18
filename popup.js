@@ -2,6 +2,7 @@
 
 // Configuration constants
 const MESSAGE_TIMEOUT_MS = 30000; // 30 seconds
+const TIMEOUT_ERROR_CODE = 'REQUEST_TIMEOUT';
 
 // Securely validate Google Calendar URLs
 function isGoogleCalendarUrl(url) {
@@ -127,7 +128,11 @@ document.addEventListener('DOMContentLoaded', function() {
           targetDate: target
         }),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Request timeout')), MESSAGE_TIMEOUT_MS)
+          setTimeout(() => {
+            const error = new Error('Request timed out. Please try again.');
+            error.code = TIMEOUT_ERROR_CODE;
+            reject(error);
+          }, MESSAGE_TIMEOUT_MS)
         )
       ]);
 
@@ -138,8 +143,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch (error) {
       console.error('Error:', error);
-      const errorMsg = error.message === 'Request timeout' 
-        ? 'Request timed out. Please try again.' 
+      const errorMsg = error.code === TIMEOUT_ERROR_CODE 
+        ? error.message
         : 'Error: ' + error.message;
       showStatus(errorMsg, 'error');
     } finally {

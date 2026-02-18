@@ -4,7 +4,7 @@ console.log('Calendar Copy extension loaded');
 
 // Configuration constants
 const OBSERVER_RETRY_DELAY_MS = 500;
-const OBSERVER_MAX_RETRIES = 10; // Stop trying after 5 seconds
+const OBSERVER_MAX_RETRIES = 10; // Total elapsed time: 10 * 500ms = 5 seconds
 
 // Music-related keywords for event detection
 const MUSIC_KEYWORDS = [
